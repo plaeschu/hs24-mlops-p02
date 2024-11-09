@@ -31,12 +31,8 @@ class GLUETransformer(L.LightningModule):
 
         self.save_hyperparameters()
 
-        self.config = AutoConfig.from_pretrained(
-            model_name_or_path, num_labels=num_labels
-        )
-        self.model = AutoModelForSequenceClassification.from_pretrained(
-            model_name_or_path, config=self.config
-        )
+        self.config = AutoConfig.from_pretrained(model_name_or_path, num_labels=num_labels)
+        self.model = AutoModelForSequenceClassification.from_pretrained(model_name_or_path, config=self.config)
         self.metric = evaluate.load(
             "glue",
             self.hparams.task_name,
@@ -64,9 +60,7 @@ class GLUETransformer(L.LightningModule):
             preds = logits.squeeze()
 
         labels = batch["labels"]
-        self.validation_step_outputs.append(
-            {"loss": val_loss, "preds": preds, "labels": labels}
-        )
+        self.validation_step_outputs.append({"loss": val_loss, "preds": preds, "labels": labels})
         return val_loss
 
     def on_validation_epoch_end(self):
@@ -79,32 +73,17 @@ class GLUETransformer(L.LightningModule):
                 loss = torch.stack([x["loss"] for x in output]).mean()
                 self.log(f"val_loss_{split}", loss, prog_bar=True)
                 split_metrics = {
-                    f"{k}_{split}": v
-                    for k, v in self.metric.compute(
-                        predictions=preds, references=labels
-                    ).items()
+                    f"{k}_{split}": v for k, v in self.metric.compute(predictions=preds, references=labels).items()
                 }
                 self.log_dict(split_metrics, prog_bar=True)
             self.validation_step_outputs.clear()
             return loss
 
-        preds = (
-            torch.cat([x["preds"] for x in self.validation_step_outputs])
-            .detach()
-            .cpu()
-            .numpy()
-        )
-        labels = (
-            torch.cat([x["labels"] for x in self.validation_step_outputs])
-            .detach()
-            .cpu()
-            .numpy()
-        )
+        preds = torch.cat([x["preds"] for x in self.validation_step_outputs]).detach().cpu().numpy()
+        labels = torch.cat([x["labels"] for x in self.validation_step_outputs]).detach().cpu().numpy()
         loss = torch.stack([x["loss"] for x in self.validation_step_outputs]).mean()
         self.log("val_loss", loss, prog_bar=True)
-        self.log_dict(
-            self.metric.compute(predictions=preds, references=labels), prog_bar=True
-        )
+        self.log_dict(self.metric.compute(predictions=preds, references=labels), prog_bar=True)
         self.validation_step_outputs.clear()
 
     def configure_optimizers(self):
@@ -113,11 +92,7 @@ class GLUETransformer(L.LightningModule):
         no_decay = ["bias", "LayerNorm.weight"]
         optimizer_grouped_parameters = [
             {
-                "params": [
-                    p
-                    for n, p in model.named_parameters()
-                    if not any(nd in n for nd in no_decay)
-                ],
+                "params": [p for n, p in model.named_parameters() if not any(nd in n for nd in no_decay)],
                 "weight_decay": self.hparams.weight_decay,
             }
         ]
@@ -126,14 +101,10 @@ class GLUETransformer(L.LightningModule):
         # Initialize optimizer based on the provided hyperparameter
         if self.hparams.optimizer == "AdamW":
             optimizer_grouped_parameters[0]["eps"] = self.hparams.epsilon
-            optimizer = AdamW(
-                optimizer_grouped_parameters, lr=self.hparams.learning_rate
-            )
+            optimizer = AdamW(optimizer_grouped_parameters, lr=self.hparams.learning_rate)
         elif self.hparams.optimizer == "Adam":
             optimizer_grouped_parameters[0]["eps"] = self.hparams.epsilon
-            optimizer = Adam(
-                optimizer_grouped_parameters, lr=self.hparams.learning_rate
-            )
+            optimizer = Adam(optimizer_grouped_parameters, lr=self.hparams.learning_rate)
         elif self.hparams.optimizer == "SGD":
             optimizer_grouped_parameters[0]["momentum"] = self.hparams.momentum
             optimizer = SGD(optimizer_grouped_parameters, lr=self.hparams.learning_rate)
@@ -155,9 +126,7 @@ class GLUETransformer(L.LightningModule):
                 num_training_steps=self.trainer.estimated_stepping_batches,
             )
         elif self.hparams.scheduler == "constantSchedule":
-            scheduler = get_constant_schedule_with_warmup(
-                optimizer, num_warmup_steps=self.hparams.warmup_steps
-            )
+            scheduler = get_constant_schedule_with_warmup(optimizer, num_warmup_steps=self.hparams.warmup_steps)
         else:
             raise ValueError(f"Unknown scheduler type: {self.hparams.scheduler}")
 

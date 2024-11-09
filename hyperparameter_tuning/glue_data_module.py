@@ -3,6 +3,7 @@ import lightning as L
 from torch.utils.data import DataLoader
 from transformers import AutoTokenizer
 
+
 class GLUEDataModule(L.LightningDataModule):
     task_text_field_map = {
         "cola": ["sentence"],
@@ -75,25 +76,56 @@ class GLUEDataModule(L.LightningDataModule):
         self.eval_splits = [x for x in self.dataset.keys() if "validation" in x]
 
     def prepare_data(self):
+        """
+        Downloads and prepares the GLUE dataset and tokenizer.
+        """
         datasets.load_dataset("glue", self.task_name)
         AutoTokenizer.from_pretrained(self.model_name_or_path, use_fast=True)
 
     def train_dataloader(self):
+        """
+        Returns the training DataLoader.
+
+        Returns:
+            DataLoader: The DataLoader for training.
+        """
         return DataLoader(self.dataset["train"], batch_size=self.train_batch_size, shuffle=True)
 
     def val_dataloader(self):
+        """
+        Returns the validation DataLoader.
+
+        Returns:
+            DataLoader: The DataLoader for validation.
+        """
         if len(self.eval_splits) == 1:
             return DataLoader(self.dataset["validation"], batch_size=self.eval_batch_size)
         elif len(self.eval_splits) > 1:
             return [DataLoader(self.dataset[x], batch_size=self.eval_batch_size) for x in self.eval_splits]
 
     def test_dataloader(self):
+        """
+        Returns the test DataLoader.
+
+        Returns:
+            DataLoader: The DataLoader for testing.
+        """
         if len(self.eval_splits) == 1:
             return DataLoader(self.dataset["test"], batch_size=self.eval_batch_size)
         elif len(self.eval_splits) > 1:
             return [DataLoader(self.dataset[x], batch_size=self.eval_batch_size) for x in self.eval_splits]
 
     def convert_to_features(self, example_batch, indices=None):
+        """
+        Converts a batch of examples into features suitable for model input.
+
+        Args:
+            example_batch (dict): A batch of examples.
+            indices (list, optional): List of indices for the examples. Defaults to None.
+
+        Returns:
+            dict: A dictionary of features including input_ids, attention_mask, token_type_ids, and labels.
+        """
         # Either encode single sentence or sentence pairs
         if len(self.text_fields) > 1:
             texts_or_text_pairs = list(zip(example_batch[self.text_fields[0]], example_batch[self.text_fields[1]]))
