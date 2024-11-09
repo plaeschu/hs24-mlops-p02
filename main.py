@@ -36,5 +36,5 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    experiment = Experiment(args)
-    experiment.run_experiment()
+    experiment = Experiment()
+    experiment.run_experiment(args)

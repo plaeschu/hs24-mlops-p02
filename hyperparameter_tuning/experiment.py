@@ -1,6 +1,7 @@
 import wandb
 import lightning as L
-from pytorch_lightning.loggers import WandbLogger
+from lightning.pytorch.loggers import WandbLogger
+from lightning.pytorch.callbacks import ModelCheckpoint
 from hyperparameter_tuning.glue_data_module import GLUEDataModule
 from hyperparameter_tuning.glue_transformer import GLUETransformer
 
@@ -10,72 +11,74 @@ class Experiment:
     Class to set up and run an experiment using PyTorch Lightning and Weights & Biases.
     """
 
-    def __init__(self, args):
-        """
-        Initializes the Experiment class with the given arguments.
-
-        Args:
-            args (Namespace): The arguments for the experiment.
-        """
-        self.args = args
-        self.wandb_logger = None
-        self.dm = None
-        self.model = None
-        self.checkpoint_callback = None
-        self.trainer = None
-
-    def setup_wandb(self):
-        """
-        Sets up Weights & Biases (wandb) for logging the experiment.
-        """
-        run_name = f"{self.args.optimizer}_learningRate{self.args.learning_rate}_{self.args.scheduler}_warmupSteps{self.args.warmup_steps}_weightDecay{self.args.weight_decay}_batchSize{self.args.batch_size}"
-        self.wandb_logger = WandbLogger(project=self.args.projectname, name=run_name, log_model=True)
-        self.wandb_logger.log_hyperparams(vars(self.args))
-
-    def setup_data_and_model(self):
+    def setup_data_module(self, config) -> GLUEDataModule:
         """
         Sets up the data module and model for the experiment.
         """
-        self.dm = GLUEDataModule(
-            model_name_or_path=self.args.model_name_or_path,
-            task_name=self.args.task_name,
-            max_seq_length=self.args.max_seq_length,
-            train_batch_size=self.args.batch_size,
-            eval_batch_size=self.args.batch_size,
-        )
-        self.dm.setup("fit")
-
-        self.model = GLUETransformer(
-            model_name_or_path=self.args.model_name_or_path,
-            num_labels=self.dm.num_labels,
-            task_name=self.dm.task_name,
-            learning_rate=self.args.learning_rate,
-            warmup_steps=self.args.warmup_steps,
-            weight_decay=self.args.weight_decay,
-            train_batch_size=self.args.batch_size,
-            eval_batch_size=self.args.batch_size,
-            optimizer=self.args.optimizer,
-            scheduler=self.args.scheduler,
+        return GLUEDataModule(
+            model_name_or_path=config.model_name_or_path,
+            task_name=config.task_name,
+            max_seq_length=config.max_seq_length,
+            train_batch_size=config.batch_size,
+            eval_batch_size=config.batch_size,
         )
 
-    def setup_trainer(self):
+    def setup_model(self, config, dm) -> GLUETransformer:
+        """
+        Sets up the model for the experiment.
+        """
+        return GLUETransformer(
+            model_name_or_path=config.model_name_or_path,
+            num_labels=dm.num_labels,
+            task_name=dm.task_name,
+            learning_rate=config.learning_rate,
+            warmup_steps=config.warmup_steps,
+            weight_decay=config.weight_decay,
+            train_batch_size=config.batch_size,
+            eval_batch_size=config.batch_size,
+            optimizer=config.optimizer,
+            scheduler=config.scheduler,
+        )
+
+    def setup_trainer(self, run_name, config, logger) -> L.Trainer:
         """
         Sets up the PyTorch Lightning trainer for the experiment.
         """
-        self.trainer = L.Trainer(
-            max_epochs=self.args.epochs,
-            accelerator="auto",
-            devices=1,
-            logger=self.wandb_logger,
-            callbacks=[self.checkpoint_callback],
+        model_checkpoint = ModelCheckpoint(
+            dirpath=config.checkpoint_dir,
+            filename=f"{config.model_name_or_path}_{run_name}",
+            monitor="val_loss",
+            mode="min",
+            save_top_k=1,
+            save_weights_only=True,
         )
 
-    def run_experiment(self):
+        return L.Trainer(
+            max_epochs=config.epochs,
+            accelerator="auto",
+            devices=1,
+            logger=logger,
+            callbacks=[model_checkpoint],
+        )
+
+    def run_experiment(self, config):
         """
         Runs the experiment.
         """
-        self.setup_wandb()
-        self.setup_data_and_model()
-        self.setup_trainer()
-        self.trainer.fit(self.model, self.dm)
-        wandb.finish()
+        run_name = (
+            f"{config.optimizer}"
+            + f"_learningRate{config.learning_rate}_{config.scheduler}"
+            + f"_warmupSteps{config.warmup_steps}"
+            + f"_weightDecay{config.weight_decay}"
+            + f"_batchSize{config.batch_size}"
+        )
+        with wandb.init(project=config.projectname, name=run_name, config=config):
+            config = wandb.config
+            data_module = self.setup_data_module(config)
+            data_module.setup("fit")
+            model = self.setup_model(config, data_module)
+            logger = WandbLogger()
+            trainer = self.setup_trainer(run_name, config, logger)
+            trainer.fit(model, data_module)
+            wandb.log_model(path=f"{config.checkpoint_dir}\\{config.model_name_or_path}_{run_name}.ckpt", name=run_name)
+            wandb.finish()

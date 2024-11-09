@@ -99,33 +99,30 @@ class GLUETransformer(L.LightningModule):
 
         optimizer = None
         # Initialize optimizer based on the provided hyperparameter
-        if self.hparams.optimizer == "AdamW":
-            optimizer_grouped_parameters[0]["eps"] = self.hparams.epsilon
+        if self.hparams.optimizer == "adamw":
             optimizer = AdamW(optimizer_grouped_parameters, lr=self.hparams.learning_rate)
-        elif self.hparams.optimizer == "Adam":
-            optimizer_grouped_parameters[0]["eps"] = self.hparams.epsilon
+        elif self.hparams.optimizer == "adam":
             optimizer = Adam(optimizer_grouped_parameters, lr=self.hparams.learning_rate)
-        elif self.hparams.optimizer == "SGD":
-            optimizer_grouped_parameters[0]["momentum"] = self.hparams.momentum
+        elif self.hparams.optimizer == "sgd":
             optimizer = SGD(optimizer_grouped_parameters, lr=self.hparams.learning_rate)
         else:
             raise ValueError(f"Unknown optimizer type: {self.hparams.optimizer}")
 
         # Initialize learning rate scheduler
         scheduler = None
-        if self.hparams.scheduler == "linearSchedule":
+        if self.hparams.scheduler == "linear":
             scheduler = get_linear_schedule_with_warmup(
                 optimizer,
                 num_warmup_steps=self.hparams.warmup_steps,
                 num_training_steps=self.trainer.estimated_stepping_batches,
             )
-        elif self.hparams.scheduler == "cosineSchedule":
+        elif self.hparams.scheduler == "cosine":
             scheduler = get_cosine_schedule_with_warmup(
                 optimizer,
                 num_warmup_steps=self.hparams.warmup_steps,
                 num_training_steps=self.trainer.estimated_stepping_batches,
             )
-        elif self.hparams.scheduler == "constantSchedule":
+        elif self.hparams.scheduler == "constant":
             scheduler = get_constant_schedule_with_warmup(optimizer, num_warmup_steps=self.hparams.warmup_steps)
         else:
             raise ValueError(f"Unknown scheduler type: {self.hparams.scheduler}")
