@@ -80,5 +80,5 @@ class Experiment:
             logger = WandbLogger()
             trainer = self.setup_trainer(run_name, config, logger)
             trainer.fit(model, data_module)
-            wandb.log_model(path=f"{config.checkpoint_dir}\\{config.model_name_or_path}_{run_name}.ckpt", name=run_name)
+            wandb.log_model(path=f"{config.checkpoint_dir}/{config.model_name_or_path}_{run_name}.ckpt", name=run_name)
             wandb.finish()
