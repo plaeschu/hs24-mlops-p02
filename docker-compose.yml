@@ -1,0 +1,8 @@
+version: '3.4'
+
+services:
+  hs24mlopsp02:
+    image: hs24mlopsp02
+    build:
+      context: .
+      dockerfile: ./Dockerfile
