@@ -4,5 +4,6 @@
     "dockerfile": "../Dockerfile"
   },
   "workspaceFolder": "../app",
-  "runArgs": []
+  "runArgs": ["--volume=/var/lib/docker", "--privileged"],
+  "postCreateCommand": "python main.py --projectname hs24-mlops-p02"
 }
