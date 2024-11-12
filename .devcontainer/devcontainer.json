@@ -1,0 +1,8 @@
+{
+  "name": "HS24 MLOPS P02",
+  "build": {
+    "dockerfile": "../Dockerfile"
+  },
+  "workspaceFolder": "../app",
+  "runArgs": []
+}
