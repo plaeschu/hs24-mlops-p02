@@ -5,5 +5,5 @@
   },
   "workspaceFolder": "../app",
   "runArgs": ["--volume=/var/lib/docker", "--privileged"],
-  "postCreateCommand": "python main.py --projectname hs24-mlops-p02"
+  "postCreateCommand": "cd /workspace/app && python main.py --projectname hs24-mlops-p02"
 }
