@@ -54,20 +54,15 @@ docker run --rm --gpus all --env WANDB_API_KEY=key hs24mlopsp02 --args
 ## Guide to Run on Codespaces
 The second option to run the container is on Codespaces. As the available performance is limited the training run does take quite some time on Codespaces. The important file to run the container on Codespaces is the  [decontainer.json](./\.devcontainer/devcontainer.json). This file customises the devcontainer. 
 
-1. Fork the [repository](https://github.com/plaeschu/hs24-mlops-p02.git)
+1. Fork the [repository](https://github.com/plaeschu/hs24-mlops-p02.git)\
 ![Fork the repository](./assets/fork_repository.png)
-
-1. Configure the Wandb API Key
+1. Configure the Wandb API Key\
 ![Configure the Wandb API Key](./assets/wandp_api_key.png)
-
-1. Configure idle timeout because the training run takes a while
+1. Configure idle timeout because the training run takes a while\
 ![Configure the training run](./assets/default_idle_timeout.png)
-
-1. Configure the Codespaces container
+1. Configure the Codespaces container\
 ![Configure the Codespaces ](./assets/configure_container.png)
-
-1. Build the Codespaces container
+1. Build the Codespaces container\
 ![Build the Codespaces](./assets/create_codespace.png)
-
-1. After building the container it automatically starts the training run with some predefined hyperparameters. They can be adapted in the ``postStartCommand``. This command is run every time the container is started, even if the container is started from idle.
+1. After building the container it automatically starts the training run with some predefined hyperparameters. They can be adapted in the ``postStartCommand``. This command is run every time the container is started, even if the container is started from idle.\
 ![Training run in codespaces](./assets/codespaces_console.png)
