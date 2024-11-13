@@ -28,6 +28,7 @@ if __name__ == "__main__":
     parser.add_argument("--warmup_steps", type=int, default=0, help="Number of warmup steps")
     parser.add_argument("--optimizer", type=str, default="adamw", help="Optimizer type")
     parser.add_argument("--epochs", type=int, default=3, help="Number of epochs")
+    parser.add_argument("--seed", type=int, default=None, help="Seed for reproducibility")
     parser.add_argument(
         "--checkpoint_dir",
         type=str,

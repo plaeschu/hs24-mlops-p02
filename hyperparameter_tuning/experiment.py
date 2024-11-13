@@ -65,6 +65,9 @@ class Experiment:
         """
         Runs the experiment.
         """
+        if config.seed is not None:
+            L.seed_everything(config.seed)
+
         run_name = (
             f"{config.optimizer}"
             + f"_learningRate{config.learning_rate}_{config.scheduler}"
@@ -72,6 +75,7 @@ class Experiment:
             + f"_weightDecay{config.weight_decay}"
             + f"_batchSize{config.batch_size}"
         )
+
         with wandb.init(project=config.projectname, name=run_name, config=config):
             config = wandb.config
             data_module = self.setup_data_module(config)
