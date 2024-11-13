@@ -1,0 +1,8 @@
+{
+  "name": "HS24 MLOPS P02",
+  "build": {
+    "dockerfile": "../Dockerfile"
+  },
+  "workspaceFolder": "/app",
+  "postStartCommand": "python main.py --projectname hs24-mlops-p02 --learning_rate 2e-5 --scheduler cosine --warmup_steps 400 --seed 42"
+}
